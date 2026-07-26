@@ -41,6 +41,10 @@ async function setup(sql) {
         by_name TEXT NOT NULL,
         PRIMARY KEY (spot_id, by_name)
       )`
+      // device identity columns (safe to re-run)
+      await sql`ALTER TABLE spots ADD COLUMN IF NOT EXISTS device_id TEXT`
+      await sql`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS device_id TEXT`
+      await sql`ALTER TABLE cosigns ADD COLUMN IF NOT EXISTS device_id TEXT`
       const [{ n }] = await sql`SELECT count(*)::int AS n FROM spots`
       if (n === 0) {
         for (const [id, name, area, lat, lng] of SEEDS) {
@@ -93,6 +97,19 @@ export default async function handler(req, res) {
     if (req.method === 'POST') {
       const b = req.body || {}
       const by = clip(b.by, 40) || 'Anonymous'
+      const dev = clip(b.deviceId, 64) || null
+
+      // simple abuse brake: max 25 actions per device per 10 minutes
+      if (dev) {
+        const [{ n }] = await sql`
+          SELECT (SELECT count(*) FROM ratings WHERE device_id = ${dev} AND at > now() - interval '10 minutes')
+               + (SELECT count(*) FROM spots  WHERE device_id = ${dev} AND created_at > now() - interval '10 minutes')
+               AS n`
+        if (Number(n) >= 25) {
+          res.status(429).json({ error: 'slow down' })
+          return
+        }
+      }
       if (b.action === 'add_spot') {
         const lat = Number(b.lat)
         const lng = Number(b.lng)
@@ -100,10 +117,10 @@ export default async function handler(req, res) {
           res.status(400).json({ error: 'bad spot' })
           return
         }
-        await sql`INSERT INTO spots (id, name, area, lat, lng, pitch, by_name)
+        await sql`INSERT INTO spots (id, name, area, lat, lng, pitch, by_name, device_id)
                   VALUES (${clip(b.id, 64) || 'u' + Date.now()}, ${clip(b.name, 80)},
                           ${clip(b.area, 60) || 'Nearby'}, ${lat}, ${lng},
-                          ${clip(b.pitch, 200)}, ${by})
+                          ${clip(b.pitch, 200)}, ${by}, ${dev})
                   ON CONFLICT (id) DO NOTHING`
       } else if (b.action === 'rate') {
         const score = Number(b.score)
@@ -111,14 +128,21 @@ export default async function handler(req, res) {
           res.status(400).json({ error: 'bad rating' })
           return
         }
-        await sql`INSERT INTO ratings (spot_id, by_name, score, order_text, note)
+        // one score per device per spot: re-scoring replaces the old score
+        if (dev) {
+          await sql`DELETE FROM ratings WHERE spot_id = ${clip(b.spotId, 64)} AND device_id = ${dev}`
+        }
+        await sql`INSERT INTO ratings (spot_id, by_name, score, order_text, note, device_id)
                   VALUES (${clip(b.spotId, 64)}, ${by}, ${score},
-                          ${clip(b.order, 80)}, ${clip(b.note, 240)})`
+                          ${clip(b.order, 80)}, ${clip(b.note, 240)}, ${dev})`
       } else if (b.action === 'cosign') {
         const id = clip(b.spotId, 64)
-        const del = await sql`DELETE FROM cosigns WHERE spot_id = ${id} AND by_name = ${by} RETURNING 1`
+        // toggle by device when we have one (name is just the display label)
+        const del = dev
+          ? await sql`DELETE FROM cosigns WHERE spot_id = ${id} AND device_id = ${dev} RETURNING 1`
+          : await sql`DELETE FROM cosigns WHERE spot_id = ${id} AND by_name = ${by} RETURNING 1`
         if (del.length === 0) {
-          await sql`INSERT INTO cosigns (spot_id, by_name) VALUES (${id}, ${by})
+          await sql`INSERT INTO cosigns (spot_id, by_name, device_id) VALUES (${id}, ${by}, ${dev})
                     ON CONFLICT DO NOTHING`
         }
       } else {
