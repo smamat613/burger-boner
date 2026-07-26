@@ -56,13 +56,20 @@ export default function App() {
 
   // ---- discovery: pull burger-suspect places into the map as it moves ----
   const sweep = useCallback(async (center, radiusM) => {
-    const done = searchedRef.current.some(
-      (p) => Math.abs(p.lat - center.lat) < 0.02 && Math.abs(p.lng - center.lng) < 0.02,
-    )
+    const r = Math.min(radiusM || 4000, 15000)
+    // skip only if we've already swept this spot at a similar-or-bigger radius
+    const done = searchedRef.current.some((p) => {
+      const dM =
+        Math.hypot(
+          (p.lat - center.lat) * 111320,
+          (p.lng - center.lng) * 111320 * Math.cos((center.lat * Math.PI) / 180),
+        )
+      return dM < p.r * 0.5 && p.r >= r * 0.8
+    })
     if (done) return
-    searchedRef.current.push(center)
+    searchedRef.current.push({ lat: center.lat, lng: center.lng, r })
     try {
-      const found = await findNearbyBurgers(center, radiusM)
+      const found = await findNearbyBurgers(center, r)
       setDiscovered((prev) => {
         const ids = new Set(prev.map((d) => d.id))
         return [...prev, ...found.filter((d) => !ids.has(d.id))]
@@ -76,7 +83,7 @@ export default function App() {
     (center) => {
       centerRef.current = center
       clearTimeout(debounceRef.current)
-      debounceRef.current = setTimeout(() => sweep(center), 900)
+      debounceRef.current = setTimeout(() => sweep(center, center.radius), 900)
     },
     [sweep],
   )
