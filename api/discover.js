@@ -16,7 +16,15 @@ const rotated = () => {
 
 const NAME_RX = /burger|patty|smash|whopper|slider|griddle|char.?grill/i
 
+// Big chains get filtered out — this app is about finding the real ones.
+const CHAIN_RX =
+  /^(mc ?donald|burger king|wendy'?s|five guys|shake shack|white castle|a ?& ?w|sonic( drive.?in)?|dairy queen|culver'?s|in.?n.?out|whataburger|jack in the box|carl'?s jr|hardee'?s|checkers|rally'?s|steak ?'?n ?shake|smashburger|applebee|chili'?s|t\.?g\.?i\.?|red robin|denny'?s|ihop|harvey'?s|firehouse subs|jimmy john|subway|arby'?s|kfc|taco bell|popeyes|chick.?fil.?a|savvy'?s? sliders?)/i
+
+const isChain = (tags = {}) =>
+  CHAIN_RX.test((tags.name || '').trim()) || (tags.brand && CHAIN_RX.test(tags.brand))
+
 function heuristicScore(tags = {}) {
+  if (isChain(tags)) return 0
   const cuisine = (tags.cuisine || '').toLowerCase()
   const name = tags.name || ''
   if (cuisine.includes('burger')) return 1 // literally a burger place
