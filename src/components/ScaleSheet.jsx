@@ -9,6 +9,30 @@ export function ScaleSheet({ onClose }) {
         One needle, 180 degrees. Flat on the floor is a burger you regret. Straight up is the best
         thing you'll eat this year. Everything else is somewhere in between.
       </p>
+
+      {/* the two ends of the scale, illustrated */}
+      <div className="flex gap-3 mb-4">
+        {[
+          ['/art/tier-flaccid.jpg', 'FLACCID', C.ketchup, 'A burger you eat in shame.'],
+          ['/art/tier-rockhard.jpg', 'ROCK HARD', C.pickle, 'A burger worth the pilgrimage.'],
+        ].map(([src, label, color, line]) => (
+          <div
+            key={label}
+            className="flex-1 rounded overflow-hidden"
+            style={{ border: `3px solid ${C.char}`, boxShadow: `3px 3px 0 ${C.char}` }}
+          >
+            <img src={src} alt={`${label} tier`} className="w-full block" style={{ aspectRatio: '3/4', objectFit: 'cover' }} />
+            <div className="px-2 py-1" style={{ background: C.char }}>
+              <span style={{ fontFamily: F_DISPLAY, fontSize: 16, color, letterSpacing: '0.04em' }}>
+                {label}
+              </span>
+              <span className="block" style={{ fontFamily: F_MONO, fontSize: 8.5, color: C.paperDeep, opacity: 0.8 }}>
+                {line.toUpperCase()}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-wrap justify-between gap-y-3">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
           <div key={n} className="flex flex-col items-center" style={{ width: '19%' }}>
