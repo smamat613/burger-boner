@@ -41,6 +41,15 @@ async function setup(sql) {
         by_name TEXT NOT NULL,
         PRIMARY KEY (spot_id, by_name)
       )`
+      await sql`CREATE TABLE IF NOT EXISTS links (
+        id BIGSERIAL PRIMARY KEY,
+        spot_id TEXT NOT NULL REFERENCES spots(id) ON DELETE CASCADE,
+        url TEXT NOT NULL,
+        title TEXT NOT NULL DEFAULT '',
+        by_name TEXT NOT NULL DEFAULT 'Anonymous',
+        device_id TEXT,
+        at TIMESTAMPTZ NOT NULL DEFAULT now()
+      )`
       // device identity columns (safe to re-run)
       await sql`ALTER TABLE spots ADD COLUMN IF NOT EXISTS device_id TEXT`
       await sql`ALTER TABLE ratings ADD COLUMN IF NOT EXISTS device_id TEXT`
@@ -62,6 +71,7 @@ async function allSpots(sql) {
   const spots = await sql`SELECT * FROM spots ORDER BY created_at`
   const ratings = await sql`SELECT * FROM ratings ORDER BY at DESC`
   const cosigns = await sql`SELECT * FROM cosigns`
+  const links = await sql`SELECT * FROM links ORDER BY at DESC`
   return spots.map((s) => ({
     id: s.id,
     name: s.name,
@@ -80,6 +90,10 @@ async function allSpots(sql) {
         at: new Date(r.at).getTime(),
       })),
     cosigns: cosigns.filter((c) => c.spot_id === s.id).map((c) => c.by_name),
+    links: links
+      .filter((l) => l.spot_id === s.id)
+      .slice(0, 10)
+      .map((l) => ({ url: l.url, title: l.title, by: l.by_name, at: new Date(l.at).getTime() })),
   }))
 }
 
@@ -145,6 +159,20 @@ export default async function handler(req, res) {
           await sql`INSERT INTO cosigns (spot_id, by_name, device_id) VALUES (${id}, ${by}, ${dev})
                     ON CONFLICT DO NOTHING`
         }
+      } else if (b.action === 'add_link') {
+        let parsed
+        try {
+          parsed = new URL(String(b.url))
+        } catch {
+          parsed = null
+        }
+        if (!b.spotId || !parsed || !/^https?:$/.test(parsed.protocol)) {
+          res.status(400).json({ error: 'bad link' })
+          return
+        }
+        await sql`INSERT INTO links (spot_id, url, title, by_name, device_id)
+                  VALUES (${clip(b.spotId, 64)}, ${clip(parsed.href, 500)},
+                          ${clip(b.title, 120)}, ${by}, ${dev})`
       } else {
         res.status(400).json({ error: 'unknown action' })
         return

@@ -37,6 +37,12 @@ export default async function handler(req, res) {
       return
     }
     const ratings = await sql`SELECT * FROM ratings WHERE spot_id = ${id} ORDER BY at DESC LIMIT 50`
+    let links = []
+    try {
+      links = await sql`SELECT * FROM links WHERE spot_id = ${id} ORDER BY at DESC LIMIT 6`
+    } catch {
+      /* links table may not exist yet */
+    }
     const avg = ratings.length ? ratings.reduce((a, r) => a + r.score, 0) / ratings.length : null
     const slug = slugify(spot.name)
     const canonical = `https://www.burgerboner.com/spot/${spot.id}/${slug}`
@@ -124,6 +130,20 @@ export default async function handler(req, res) {
   <div class="tier">${avg == null ? 'UNSCORED — SOMEBODY GO FIRST' : `${avg.toFixed(1)} — ${tierLabel(avg)}`}</div>
   <div class="meta">${esc(spot.area.toUpperCase())} · ${ratings.length} ${ratings.length === 1 ? 'SCORE' : 'SCORES'} · BURGER BONER™</div>
   <a class="cta" href="/?spot=${encodeURIComponent(spot.id)}">${avg == null ? 'BE THE FIRST TO SCORE IT →' : 'SCORE THIS BURGER →'}</a>
+  ${
+    links.length
+      ? `<div class="meta" style="margin-bottom:6px">🔥 THE HYPE</div>` +
+        links
+          .map((l) => {
+            let host = l.url
+            try {
+              host = new URL(l.url).hostname.replace(/^www\./, '')
+            } catch {}
+            return `<div class="row"><span><span class="who">${esc(host.toUpperCase())}</span><a class="note" rel="nofollow noreferrer" href="${esc(l.url)}">${esc(l.title || l.url.slice(0, 60))}</a></span></div>`
+          })
+          .join('')
+      : ''
+  }
   ${reviewsHtml}
 </div>
 </body>
