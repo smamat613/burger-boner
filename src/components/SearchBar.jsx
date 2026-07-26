@@ -4,7 +4,7 @@ import { IconSearch, IconX } from './icons.jsx'
 
 // Type a place name → Photon (free OpenStreetMap geocoder) pulls the address →
 // pick a result → the map flies there and the pin form opens pre-filled.
-export function SearchBar({ near, onPick }) {
+export function SearchBar({ near, onPick, onManual }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
   const [results, setResults] = useState([])
@@ -24,35 +24,61 @@ export function SearchBar({ near, onPick }) {
     }
     tRef.current = setTimeout(async () => {
       setBusy(true)
-      try {
-        const bias = near ? `&lat=${near.lat}&lon=${near.lng}&location_bias_scale=0.3` : ''
-        const res = await fetch(
-          `https://photon.komoot.io/api?q=${encodeURIComponent(q.trim())}&limit=6${bias}`,
-        )
-        const data = await res.json()
-        setResults(
-          (data.features || [])
-            .map((f) => {
-              const p = f.properties || {}
-              const [lng, lat] = f.geometry?.coordinates || []
-              if (!p.name || lat == null) return null
-              return {
-                name: p.name,
-                address: [p.housenumber && p.street ? `${p.housenumber} ${p.street}` : p.street, p.city || p.district, p.state]
-                  .filter(Boolean)
-                  .join(', '),
-                area: p.city || p.district || p.suburb || 'Nearby',
-                lat,
-                lng,
-              }
-            })
-            .filter(Boolean),
-        )
-      } catch {
-        setResults([])
-      } finally {
-        setBusy(false)
+      const term = q.trim()
+      const bias = near ? `&lat=${near.lat}&lon=${near.lng}&location_bias_scale=0.3` : ''
+      // two free OSM search services in parallel — better coverage than either alone
+      const [photon, nominatim] = await Promise.allSettled([
+        fetch(`https://photon.komoot.io/api?q=${encodeURIComponent(term)}&limit=6${bias}`).then(
+          (r) => r.json(),
+        ),
+        fetch(
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(term)}&format=jsonv2&limit=5&addressdetails=1`,
+        ).then((r) => r.json()),
+      ])
+      const found = []
+      if (photon.status === 'fulfilled') {
+        for (const f of photon.value.features || []) {
+          const p = f.properties || {}
+          const [lng, lat] = f.geometry?.coordinates || []
+          if (!p.name || lat == null) continue
+          found.push({
+            name: p.name,
+            address: [p.housenumber && p.street ? `${p.housenumber} ${p.street}` : p.street, p.city || p.district, p.state]
+              .filter(Boolean)
+              .join(', '),
+            area: p.city || p.district || p.suburb || 'Nearby',
+            lat,
+            lng,
+          })
+        }
       }
+      if (nominatim.status === 'fulfilled' && Array.isArray(nominatim.value)) {
+        for (const r of nominatim.value) {
+          const lat = Number(r.lat)
+          const lng = Number(r.lon)
+          const name = r.name || (r.display_name || '').split(',')[0]
+          if (!name || !Number.isFinite(lat)) continue
+          const a = r.address || {}
+          found.push({
+            name,
+            address: [a.road, a.city || a.town || a.village, a.state].filter(Boolean).join(', '),
+            area: a.city || a.town || a.village || a.suburb || 'Nearby',
+            lat,
+            lng,
+          })
+        }
+      }
+      // dedupe by name + rough location
+      const seen = new Set()
+      setResults(
+        found.filter((r) => {
+          const key = r.name.toLowerCase() + '|' + r.lat.toFixed(2)
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        }),
+      )
+      setBusy(false)
     }, 350)
     return () => clearTimeout(tRef.current)
   }, [q, near])
@@ -103,7 +129,7 @@ export function SearchBar({ near, onPick }) {
           <IconX size={18} />
         </button>
       </div>
-      {(results.length > 0 || busy) && (
+      {(results.length > 0 || busy || q.trim().length >= 3) && (
         <div
           className="mt-1 rounded overflow-hidden"
           style={{ background: C.paper, border: `3px solid ${C.char}` }}
@@ -112,6 +138,27 @@ export function SearchBar({ near, onPick }) {
             <div className="px-3 py-2" style={{ fontFamily: F_MONO, fontSize: 11, color: C.ink, opacity: 0.6 }}>
               SEARCHING…
             </div>
+          )}
+          {!busy && q.trim().length >= 3 && (
+            <button
+              onClick={() => {
+                const name = q.trim()
+                setOpen(false)
+                setQ('')
+                setResults([])
+                onManual?.(name)
+              }}
+              className="w-full px-3 py-2 text-left"
+              style={{ background: C.mustard }}
+            >
+              <span style={{ fontFamily: F_DISPLAY, fontSize: 15, color: C.char }}>
+                {results.length ? "NOT LISTED? " : "CAN'T FIND IT? "}
+                PIN “{q.trim().toUpperCase()}” YOURSELF →
+              </span>
+              <span className="block" style={{ fontFamily: F_MONO, fontSize: 9, color: C.char, opacity: 0.7 }}>
+                TAP THE MAP WHERE IT SITS — NAME COMES PRE-FILLED
+              </span>
+            </button>
           )}
           {results.map((r, i) => (
             <button
