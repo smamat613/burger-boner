@@ -9,6 +9,7 @@ import { Sheet } from './components/Sheet.jsx'
 import { SpotSheet } from './components/SpotSheet.jsx'
 import { ScaleSheet } from './components/ScaleSheet.jsx'
 import { AddSpotForm } from './components/AddSpotForm.jsx'
+import { SearchBar } from './components/SearchBar.jsx'
 import { RankedList } from './components/RankedList.jsx'
 import { RecsList } from './components/RecsList.jsx'
 import { IconMap, IconRank, IconRecs, IconPlus, IconX, IconInfo, IconLocate } from './components/icons.jsx'
@@ -30,6 +31,7 @@ export default function App() {
   const [locating, setLocating] = useState(false)
   const searchedRef = useRef([]) // areas already swept for nearby burgers
   const debounceRef = useRef(null)
+  const centerRef = useRef(DETROIT) // last map center, used to bias place search
 
   useEffect(() => {
     ;(async () => {
@@ -71,6 +73,7 @@ export default function App() {
 
   const onViewChange = useCallback(
     (center) => {
+      centerRef.current = center
       clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => sweep(center), 900)
     },
@@ -234,6 +237,17 @@ export default function App() {
               focus={focus}
               userPos={userPos}
               onViewChange={onViewChange}
+            />
+            <SearchBar
+              near={userPos || centerRef.current}
+              onPick={(r) => {
+                setFocus({ lat: r.lat, lng: r.lng })
+                setDropLL({
+                  lat: r.lat,
+                  lng: r.lng,
+                  prefill: { name: r.name, area: r.area },
+                })
+              }}
             />
             {dropMode && !dropLL && (
               <div
