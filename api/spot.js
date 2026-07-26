@@ -107,16 +107,18 @@ export default async function handler(req, res) {
 <meta property="og:type" content="website">
 <meta property="og:url" content="${canonical}">
 <script type="application/ld+json">${JSON.stringify(ld)}</script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&display=swap" rel="stylesheet">
 <style>
-  body{margin:0;background:#F2E9D8;color:#221E1B;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}
+  body{margin:0;background:#F2E9D8;color:#221E1B;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background-image:radial-gradient(rgba(34,30,27,0.055) 1px, transparent 1.2px);background-size:14px 14px}
   .wrap{max-width:640px;margin:0 auto;padding:20px}
   header{background:#221E1B;border-bottom:4px solid #E8B430;padding:14px 20px}
-  header a{font-family:Impact,'Arial Narrow Bold',sans-serif;font-size:28px;color:#E8B430;text-decoration:none}
+  header a{font-family:'Bangers',Impact,'Arial Narrow Bold',sans-serif;font-size:30px;color:#E8B430;text-decoration:none;letter-spacing:.04em;text-shadow:2px 2px 0 #C8372D}
   header a span{color:#C8372D;font-size:14px}
-  h1{font-family:Impact,'Arial Narrow Bold',sans-serif;font-size:38px;margin:18px 0 2px;line-height:1}
+  h1{font-family:'Bangers',Impact,'Arial Narrow Bold',sans-serif;font-size:42px;margin:18px 0 2px;line-height:1;letter-spacing:.03em}
   .tier{font-family:Impact,'Arial Narrow Bold',sans-serif;font-size:24px;color:${avg == null ? '#3A342E' : avg >= 7.5 ? '#4A7C3F' : avg >= 5 ? '#E8B430' : '#C8372D'}}
   .meta{font-family:ui-monospace,Menlo,monospace;font-size:12px;opacity:.65;margin-top:4px}
-  .cta{display:block;text-align:center;background:#C8372D;color:#F2E9D8;font-family:Impact,'Arial Narrow Bold',sans-serif;font-size:22px;padding:14px;border-radius:6px;text-decoration:none;margin:22px 0;letter-spacing:.03em}
+  .cta{display:block;text-align:center;background:#C8372D;color:#F2E9D8;font-family:'Bangers',Impact,'Arial Narrow Bold',sans-serif;font-size:23px;padding:14px;border-radius:6px;text-decoration:none;margin:22px 0;letter-spacing:.05em;border:3px solid #221E1B;box-shadow:4px 4px 0 #221E1B}
   .row{display:flex;gap:12px;padding:10px 0;border-top:1px solid #E6D9C0}
   .score{font-family:Impact,'Arial Narrow Bold',sans-serif;font-size:20px;min-width:38px}
   .who{display:block;font-family:ui-monospace,Menlo,monospace;font-size:10px;opacity:.6}
