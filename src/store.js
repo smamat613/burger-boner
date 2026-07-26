@@ -6,6 +6,25 @@ import { SEED_SPOTS } from './seeds.js'
 
 const LS_SPOTS = 'burger-spots'
 const LS_NAME = 'rater-name'
+const LS_DEVICE = 'device-id'
+
+// Anonymous per-phone identity: no login, but one score per person per spot,
+// and a handle for moderation later.
+export function deviceId() {
+  try {
+    let id = localStorage.getItem(LS_DEVICE)
+    if (!id) {
+      id =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : 'd' + Array.from({ length: 4 }, () => Math.random().toString(36).slice(2)).join('')
+      localStorage.setItem(LS_DEVICE, id)
+    }
+    return id
+  } catch {
+    return null
+  }
+}
 
 const normalize = (list) =>
   (Array.isArray(list) ? list : []).map((s) => ({
@@ -71,7 +90,7 @@ export const store = {
   async addSpot(spot) {
     if (this.shared) {
       try {
-        return await api({ action: 'add_spot', ...spot })
+        return await api({ action: 'add_spot', deviceId: deviceId(), ...spot })
       } catch {
         this.shared = false
       }
@@ -82,22 +101,34 @@ export const store = {
   },
 
   async rate(spotId, rating) {
+    const dev = deviceId()
     if (this.shared) {
       try {
-        return await api({ action: 'rate', spotId, ...rating })
+        return await api({ action: 'rate', spotId, deviceId: dev, ...rating })
       } catch {
         this.shared = false
       }
     }
     return localMutate((list) =>
-      list.map((s) => (s.id === spotId ? { ...s, ratings: [rating, ...s.ratings] } : s)),
+      list.map((s) =>
+        s.id === spotId
+          ? {
+              ...s,
+              // re-scoring replaces this device's previous score
+              ratings: [
+                { ...rating, deviceId: dev },
+                ...s.ratings.filter((r) => !dev || r.deviceId !== dev),
+              ],
+            }
+          : s,
+      ),
     )
   },
 
   async cosign(spotId, by) {
     if (this.shared) {
       try {
-        return await api({ action: 'cosign', spotId, by })
+        return await api({ action: 'cosign', spotId, by, deviceId: deviceId() })
       } catch {
         this.shared = false
       }

@@ -28,6 +28,7 @@ export default function App() {
   const [showScale, setShowScale] = useState(false)
   const [discovered, setDiscovered] = useState([])
   const [rankScope, setRankScope] = useState('near') // 'near' = the map area you're looking at
+  const [pendingName, setPendingName] = useState(null) // name carried from search into pin mode
   const [userPos, setUserPos] = useState(null)
   const [locating, setLocating] = useState(false)
   const searchedRef = useRef([]) // areas already swept for nearby burgers
@@ -250,7 +251,10 @@ export default function App() {
                 setDropLL({ lat: d.lat, lng: d.lng, prefill: d })
               }
               dropMode={dropMode}
-              onDrop={(ll) => setDropLL(ll)}
+              onDrop={(ll) => {
+                setDropLL(pendingName ? { ...ll, prefill: { name: pendingName } } : ll)
+                setPendingName(null)
+              }}
               focus={focus}
               userPos={userPos}
               onViewChange={onViewChange}
@@ -264,6 +268,12 @@ export default function App() {
                   lng: r.lng,
                   prefill: { name: r.name, area: r.area },
                 })
+              }}
+              onManual={(name) => {
+                setPendingName(name)
+                setDropMode(true)
+                setDropLL(null)
+                setSelected(null)
               }}
             />
             {dropMode && !dropLL && (
