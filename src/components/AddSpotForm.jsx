@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { C, F_DISPLAY, F_MONO } from '../theme.js'
+import { C, F_DISPLAY, F_MONO, COMIC_SHADOW } from '../theme.js'
 import { IconPin } from './icons.jsx'
 
 export function AddSpotForm({ ll, prefill, onSave }) {
@@ -46,7 +46,10 @@ export function AddSpotForm({ ll, prefill, onSave }) {
           background: name.trim() ? C.ketchup : C.paperDeep,
           color: name.trim() ? C.paper : C.ink,
           fontFamily: F_DISPLAY,
-          fontSize: 19,
+          fontSize: 20,
+          letterSpacing: '0.04em',
+          border: `3px solid ${C.char}`,
+          boxShadow: name.trim() ? COMIC_SHADOW : 'none',
         }}
       >
         ADD TO THE LIST

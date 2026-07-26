@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { C, F_DISPLAY, F_MONO, scoreColor, tierLabel, avgScore, topOrder, isHot } from '../theme.js'
+import { C, F_DISPLAY, F_MONO, COMIC_SHADOW, scoreColor, tierLabel, avgScore, topOrder, isHot } from '../theme.js'
 import { Gauge } from './Gauge.jsx'
 import { Sheet } from './Sheet.jsx'
 import { ScoreForm } from './ScoreForm.jsx'
@@ -144,8 +144,10 @@ export function SpotSheet({ spot, scoring, onScoreStart, onScoreCancel, onSubmit
             background: C.ketchup,
             color: C.paper,
             fontFamily: F_DISPLAY,
-            fontSize: 20,
-            letterSpacing: '0.03em',
+            fontSize: 21,
+            letterSpacing: '0.04em',
+            border: `3px solid ${C.char}`,
+            boxShadow: COMIC_SHADOW,
           }}
         >
           SCORE THIS BURGER

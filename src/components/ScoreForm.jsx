@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { C, F_DISPLAY, scoreColor, tierLabel } from '../theme.js'
+import { C, F_DISPLAY, COMIC_SHADOW, scoreColor, tierLabel } from '../theme.js'
 import { Meter } from './Gauge.jsx'
 
 export function ScoreForm({ onSubmit, onCancel }) {
@@ -52,7 +52,14 @@ export function ScoreForm({ onSubmit, onCancel }) {
         <button
           onClick={() => onSubmit(score, order, note)}
           className="flex-1 py-3 rounded"
-          style={{ background: C.char, color: C.mustard, fontFamily: F_DISPLAY, fontSize: 19 }}
+          style={{
+            background: C.char,
+            color: C.mustard,
+            fontFamily: F_DISPLAY,
+            fontSize: 20,
+            letterSpacing: '0.04em',
+            boxShadow: COMIC_SHADOW,
+          }}
         >
           POST SCORE
         </button>
