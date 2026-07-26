@@ -43,6 +43,13 @@ export default function App() {
       if (!store.shared)
         setBanner('Offline mode — scores stay on this phone until the shared database is set up.')
       setLoading(false)
+      // deep link from a spot page: burgerboner.com/?spot=<id> opens that spot
+      const wanted = new URLSearchParams(window.location.search).get('spot')
+      const target = wanted && list.find((s) => s.id === wanted)
+      if (target) {
+        setSelected(target)
+        setFocus({ lat: target.lat, lng: target.lng })
+      }
       sweep(DETROIT, 12000) // pull suspected burger spots for the opening view right away
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
