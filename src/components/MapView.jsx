@@ -9,17 +9,17 @@ function pinHtml(score, name, discovered) {
   const rot = score == null ? 128 : 180 - score * 18
   const dash = score == null ? 'stroke-dasharray="3 2.5"' : ''
   const ring = discovered ? `stroke-dasharray="4 3"` : ''
-  // average score badge on the pin itself
+  // big, readable average-score badge on the pin itself
   const badge =
     score == null
       ? ''
       : `<g>
-          <circle cx="31" cy="31" r="8.5" fill="${scoreColor(score)}" stroke="${C.paper}" stroke-width="1.5"/>
-          <text x="31" y="34" text-anchor="middle" font-family="Impact, 'Arial Narrow Bold', sans-serif" font-size="9" fill="${C.paper}">${score.toFixed(1)}</text>
+          <circle cx="36" cy="33" r="12" fill="${scoreColor(score)}" stroke="${C.paper}" stroke-width="2.5"/>
+          <text x="36" y="37.5" text-anchor="middle" font-family="Impact, 'Arial Narrow Bold', sans-serif" font-size="13" font-weight="bold" fill="${C.paper}">${score.toFixed(1)}</text>
         </g>`
   return `
     <div style="display:flex;flex-direction:column;align-items:center;transform:translateY(-4px)">
-      <svg width="42" height="42" viewBox="0 0 42 42">
+      <svg width="50" height="48" viewBox="0 0 50 48">
         <circle cx="19" cy="19" r="16" fill="${C.paper}" stroke="${discovered ? C.ink : C.char}" stroke-width="2.5" ${ring}/>
         <line x1="10" y1="19" x2="23" y2="19" stroke="${C.ink}" opacity="0.3" stroke-width="1.5"/>
         <g transform="rotate(${rot} 19 19)">
@@ -71,7 +71,10 @@ export function MapView({
     })
     map.on('moveend', () => {
       const c = map.getCenter()
-      cbRef.current.onViewChange?.({ lat: c.lat, lng: c.lng })
+      const b = map.getBounds()
+      // radius that covers what's actually on screen (capped server-side at 15 km)
+      const radius = Math.min(15000, map.distance(b.getNorthWest(), b.getSouthEast()) / 2)
+      cbRef.current.onViewChange?.({ lat: c.lat, lng: c.lng, radius })
     })
     mapRef.current = map
     return () => map.remove()
@@ -87,7 +90,7 @@ export function MapView({
         icon: L.divIcon({
           className: 'bb-pin',
           html: pinHtml(avgScore(s), s.name, false),
-          iconSize: [42, 56],
+          iconSize: [50, 62],
           iconAnchor: [19, 19],
         }),
       })
@@ -101,7 +104,7 @@ export function MapView({
         icon: L.divIcon({
           className: 'bb-pin',
           html: pinHtml(null, d.name, true),
-          iconSize: [42, 56],
+          iconSize: [50, 62],
           iconAnchor: [19, 19],
         }),
       })
