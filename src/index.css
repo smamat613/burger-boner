@@ -10,6 +10,14 @@ body,
 }
 body {
   background: #f2e9d8;
+  /* comic halftone texture on paper surfaces */
+  background-image: radial-gradient(rgba(34, 30, 27, 0.055) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+}
+
+/* cartoon display type breathes better with a touch of spacing */
+.bb-display {
+  letter-spacing: 0.03em;
 }
 @media (prefers-reduced-motion: reduce) {
   * {

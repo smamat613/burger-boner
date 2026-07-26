@@ -13,9 +13,13 @@ export const C = {
   water: '#CFE0DA',
 }
 
-export const F_DISPLAY = "Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
+export const F_DISPLAY = "'Bangers', Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
 export const F_BODY = "'Helvetica Neue', Helvetica, Arial, sans-serif"
 export const F_MONO = 'ui-monospace, SFMono-Regular, Menlo, monospace'
+
+// Comic-panel styling helpers
+export const COMIC_SHADOW = `4px 4px 0 ${'#221E1B'}`
+export const COMIC_SHADOW_SM = `3px 3px 0 ${'#221E1B'}`
 
 export const scoreColor = (s) =>
   s == null ? C.ink : s >= 7.5 ? C.pickle : s >= 5 ? C.mustard : C.ketchup

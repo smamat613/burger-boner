@@ -207,10 +207,28 @@ export default function App() {
       >
         <div>
           <div className="flex items-baseline gap-2">
-            <span style={{ fontFamily: F_DISPLAY, fontSize: 34, color: C.mustard, letterSpacing: '0.01em', lineHeight: 1 }}>
+            <span
+              style={{
+                fontFamily: F_DISPLAY,
+                fontSize: 36,
+                color: C.mustard,
+                letterSpacing: '0.04em',
+                lineHeight: 1,
+                textShadow: `3px 3px 0 ${C.ketchup}`,
+              }}
+            >
               {APP_NAME}
             </span>
-            <span style={{ fontFamily: F_DISPLAY, fontSize: 15, color: C.ketchup, lineHeight: 1 }}>
+            <span
+              style={{
+                fontFamily: F_DISPLAY,
+                fontSize: 16,
+                color: C.ketchup,
+                lineHeight: 1,
+                display: 'inline-block',
+                transform: 'rotate(-6deg)',
+              }}
+            >
               {APP_TAG}
             </span>
           </div>
@@ -333,6 +351,7 @@ export default function App() {
                 background: dropMode ? C.ketchup : C.char,
                 color: C.mustard,
                 border: `3px solid ${C.mustard}`,
+                boxShadow: '3px 3px 0 rgba(34,30,27,0.55)',
                 zIndex: 500,
               }}
               aria-label={dropMode ? 'Cancel' : 'Recommend a spot'}
