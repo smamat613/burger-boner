@@ -2,10 +2,39 @@ import { C, F_DISPLAY, F_MONO, avgScore, tierLabel, topOrder } from '../theme.js
 import { Gauge } from './Gauge.jsx'
 import { EmptyState } from './Sheet.jsx'
 
-export function RankedList({ spots, onPick }) {
+export function RankedList({ spots, onPick, scope, onScope, areaCount }) {
   return (
     <div className="h-full overflow-y-auto px-4 py-4">
-      {spots.length === 0 && <EmptyState line="No scores yet. Somebody has to go first." />}
+      <div className="flex rounded overflow-hidden mb-3" style={{ border: `2px solid ${C.char}` }}>
+        {[
+          ['near', `THIS AREA${scope === 'near' ? ` (${areaCount})` : ''}`],
+          ['all', 'EVERYWHERE'],
+        ].map(([key, label]) => (
+          <button
+            key={key}
+            onClick={() => onScope(key)}
+            className="flex-1 py-2"
+            style={{
+              background: scope === key ? C.char : 'transparent',
+              color: scope === key ? C.mustard : C.char,
+              fontFamily: F_MONO,
+              fontSize: 10,
+              letterSpacing: '0.06em',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {spots.length === 0 && (
+        <EmptyState
+          line={
+            scope === 'near'
+              ? 'No scores in this area yet. Somebody has to go first.'
+              : 'No scores yet. Somebody has to go first.'
+          }
+        />
+      )}
       {spots.map((s, i) => {
         const best = topOrder(s)
         const avg = avgScore(s)
