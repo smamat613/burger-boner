@@ -1,10 +1,10 @@
 import { useEffect, useRef } from 'react'
 import L from 'leaflet'
-import { C, scoreColor, avgScore } from '../theme.js'
+import { C, scoreColor, avgScore, isHot } from '../theme.js'
 import { DETROIT } from '../seeds.js'
 
 // Mini needle-dial pin, drawn as an inline SVG divIcon
-function pinHtml(score, name, discovered) {
+function pinHtml(score, name, discovered, hot) {
   const color = discovered ? C.ink : scoreColor(score)
   const rot = score == null ? 128 : 180 - score * 18
   const dash = score == null ? 'stroke-dasharray="3 2.5"' : ''
@@ -27,6 +27,7 @@ function pinHtml(score, name, discovered) {
         </g>
         <circle cx="19" cy="19" r="2.6" fill="${color}"/>
         ${badge}
+        ${hot ? '<text x="3" y="10" font-size="11">🔥</text>' : ''}
       </svg>
       <span class="bb-pin-label" style="${discovered ? 'opacity:0.75' : ''}">${name
         .replace(/&/g, '&amp;')
@@ -89,7 +90,7 @@ export function MapView({
       const m = L.marker([s.lat, s.lng], {
         icon: L.divIcon({
           className: 'bb-pin',
-          html: pinHtml(avgScore(s), s.name, false),
+          html: pinHtml(avgScore(s), s.name, false, isHot(s)),
           iconSize: [50, 62],
           iconAnchor: [19, 19],
         }),

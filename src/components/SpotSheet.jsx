@@ -1,9 +1,21 @@
-import { C, F_DISPLAY, F_MONO, scoreColor, tierLabel, avgScore, topOrder } from '../theme.js'
+import { useState } from 'react'
+import { C, F_DISPLAY, F_MONO, scoreColor, tierLabel, avgScore, topOrder, isHot } from '../theme.js'
 import { Gauge } from './Gauge.jsx'
 import { Sheet } from './Sheet.jsx'
 import { ScoreForm } from './ScoreForm.jsx'
 
-export function SpotSheet({ spot, scoring, onScoreStart, onScoreCancel, onSubmit, onClose }) {
+const domain = (u) => {
+  try {
+    return new URL(u).hostname.replace(/^www\./, '')
+  } catch {
+    return u
+  }
+}
+
+export function SpotSheet({ spot, scoring, onScoreStart, onScoreCancel, onSubmit, onAddLink, onClose }) {
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [linkUrl, setLinkUrl] = useState('')
+  const [linkTitle, setLinkTitle] = useState('')
   const avg = avgScore(spot)
   const best = topOrder(spot)
   return (
@@ -43,6 +55,74 @@ export function SpotSheet({ spot, scoring, onScoreStart, onScoreCancel, onSubmit
           </div>
         </div>
       )}
+
+      {/* HYPE: articles + videos people attach to this spot */}
+      <div className="mt-4 p-3 rounded" style={{ border: `2px solid ${C.paperDeep}` }}>
+        <div className="flex items-center justify-between">
+          <span style={{ fontFamily: F_MONO, fontSize: 10, color: C.ink, opacity: 0.7 }}>
+            {isHot(spot) ? '🔥 ' : ''}HYPE{spot.links?.length ? ` · ${spot.links.length} ${spot.links.length === 1 ? 'LINK' : 'LINKS'}` : ''}
+          </span>
+          <button
+            onClick={() => setLinkOpen(!linkOpen)}
+            style={{ fontFamily: F_MONO, fontSize: 10, color: C.ketchup }}
+          >
+            {linkOpen ? 'CANCEL' : '+ ADD A LINK'}
+          </button>
+        </div>
+        {linkOpen && (
+          <div className="mt-2">
+            <input
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="Paste a TikTok, article, or video URL"
+              className="w-full px-2 py-2 rounded mb-1"
+              style={{ border: `2px solid ${C.char}`, background: C.paper, color: C.char, fontSize: 13 }}
+            />
+            <input
+              value={linkTitle}
+              onChange={(e) => setLinkTitle(e.target.value)}
+              placeholder="What is it? (optional)"
+              className="w-full px-2 py-2 rounded mb-1"
+              style={{ border: `2px solid ${C.char}`, background: C.paper, color: C.char, fontSize: 13 }}
+            />
+            <button
+              disabled={!/^https?:\/\/\S+\.\S+/.test(linkUrl.trim())}
+              onClick={() => {
+                onAddLink(spot.id, linkUrl.trim(), linkTitle.trim())
+                setLinkOpen(false)
+                setLinkUrl('')
+                setLinkTitle('')
+              }}
+              className="w-full py-2 rounded"
+              style={{
+                background: /^https?:\/\/\S+\.\S+/.test(linkUrl.trim()) ? C.char : C.paperDeep,
+                color: /^https?:\/\/\S+\.\S+/.test(linkUrl.trim()) ? C.mustard : C.ink,
+                fontFamily: F_DISPLAY,
+                fontSize: 15,
+              }}
+            >
+              POST THE HYPE
+            </button>
+          </div>
+        )}
+        {(spot.links || []).slice(0, 6).map((l, i) => (
+          <a
+            key={i}
+            href={l.url}
+            target="_blank"
+            rel="noreferrer nofollow"
+            className="block mt-2"
+            style={{ textDecoration: 'none' }}
+          >
+            <span style={{ fontFamily: F_MONO, fontSize: 10, color: C.pickle }}>
+              {domain(l.url).toUpperCase()}
+            </span>
+            <span className="block" style={{ fontSize: 13, color: C.char, textDecoration: 'underline' }}>
+              {l.title || l.url.slice(0, 60)}
+            </span>
+          </a>
+        ))}
+      </div>
 
       <a
         href={`https://maps.apple.com/?ll=${spot.lat},${spot.lng}&q=${encodeURIComponent(spot.name)}`}
