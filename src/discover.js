@@ -13,7 +13,15 @@ const OVERPASS = [
 
 const NAME_RX = /burger|patty|smash|whopper|slider|griddle|char.?grill/i
 
+// Big chains get filtered out — this app is about finding the real ones.
+const CHAIN_RX =
+  /^(mc ?donald|burger king|wendy'?s|five guys|shake shack|white castle|a ?& ?w|sonic( drive.?in)?|dairy queen|culver'?s|in.?n.?out|whataburger|jack in the box|carl'?s jr|hardee'?s|checkers|rally'?s|steak ?'?n ?shake|smashburger|applebee|chili'?s|t\.?g\.?i\.?|red robin|denny'?s|ihop|harvey'?s|firehouse subs|jimmy john|subway|arby'?s|kfc|taco bell|popeyes|chick.?fil.?a|savvy'?s? sliders?)/i
+
+const isChain = (tags = {}) =>
+  CHAIN_RX.test((tags.name || '').trim()) || (tags.brand && CHAIN_RX.test(tags.brand))
+
 const score = (tags = {}) => {
+  if (isChain(tags)) return 0
   const cuisine = (tags.cuisine || '').toLowerCase()
   if (cuisine.includes('burger')) return 1
   if (NAME_RX.test(tags.name || '')) return 0.9
@@ -90,6 +98,7 @@ const fromPhoton = async (lat, lng, r) => {
       const p = f.properties || {}
       const [plng, plat] = f.geometry?.coordinates || []
       if (!p.name || plat == null) return null
+      if (isChain({ name: p.name })) return null
       if (dist(lat, lng, plat, plng) > r * 1.5) return null
       if (!/fast_food|restaurant|pub|bar/.test(`${p.osm_value} ${p.osm_key}`)) return null
       return {
