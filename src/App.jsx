@@ -27,6 +27,7 @@ export default function App() {
   const [focus, setFocus] = useState(null)
   const [showScale, setShowScale] = useState(false)
   const [discovered, setDiscovered] = useState([])
+  const [rankScope, setRankScope] = useState('near') // 'near' = the map area you're looking at
   const [userPos, setUserPos] = useState(null)
   const [locating, setLocating] = useState(false)
   const searchedRef = useRef([]) // areas already swept for nearby burgers
@@ -147,7 +148,16 @@ export default function App() {
     setFocus({ lat: spot.lat, lng: spot.lng })
   }
 
-  const ranked = spots.filter((s) => s.ratings.length).sort((a, b) => avgScore(b) - avgScore(a))
+  // ranked list, scoped to the map area you're looking at (~25 km) or everywhere
+  const kmBetween = (a, b) => {
+    const dy = (a.lat - b.lat) * 111.32
+    const dx = (a.lng - b.lng) * 111.32 * Math.cos((a.lat * Math.PI) / 180)
+    return Math.hypot(dx, dy)
+  }
+  const anchor = userPos || centerRef.current
+  const rankedAll = spots.filter((s) => s.ratings.length).sort((a, b) => avgScore(b) - avgScore(a))
+  const rankedNear = rankedAll.filter((s) => kmBetween(s, anchor) <= 25)
+  const ranked = rankScope === 'near' ? rankedNear : rankedAll
   const recs = spots
     .filter((s) => !s.ratings.length)
     .sort((a, b) => b.cosigns.length - a.cosigns.length || b.id.localeCompare(a.id))
@@ -184,7 +194,7 @@ export default function App() {
             </span>
           </div>
           <div style={{ fontFamily: F_MONO, fontSize: 10, color: C.paperDeep, opacity: 0.7, marginTop: 4 }}>
-            {store.shared ? 'LIVE' : 'THIS PHONE ONLY'} · {ranked.length} SCORED · {recs.length} ON THE LIST
+            {store.shared ? 'LIVE' : 'THIS PHONE ONLY'} · {rankedAll.length} SCORED · {recs.length} ON THE LIST
           </div>
         </div>
         <button
@@ -301,7 +311,15 @@ export default function App() {
             </button>
           </>
         )}
-        {tab === 'rank' && <RankedList spots={ranked} onPick={(s) => openSpot(s)} />}
+        {tab === 'rank' && (
+          <RankedList
+            spots={ranked}
+            onPick={(s) => openSpot(s)}
+            scope={rankScope}
+            onScope={setRankScope}
+            areaCount={rankedNear.length}
+          />
+        )}
         {tab === 'recs' && (
           <RecsList spots={recs} me={me()} onCosign={toggleCosign} onScore={(s) => openSpot(s, true)} />
         )}
