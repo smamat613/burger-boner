@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+@import 'leaflet/dist/leaflet.css';
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+}
+body {
+  background: #f2e9d8;
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Leaflet tweaks to match the app */
+.leaflet-container {
+  background: #e6d9c0;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.leaflet-control-attribution {
+  background: rgba(242, 233, 216, 0.8) !important;
+  color: #3a342e;
+  font-size: 9px;
+}
+.bb-pin {
+  background: none;
+  border: none;
+}
+.bb-pin-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: #221e1b;
+  text-shadow:
+    0 0 3px #f2e9d8,
+    0 0 3px #f2e9d8,
+    0 0 3px #f2e9d8;
+  white-space: nowrap;
+}
