@@ -8,6 +8,12 @@ const MIRRORS = [
   'https://overpass.private.coffee/api/interpreter',
 ]
 
+// Rotate mirror order per invocation so one rate-limited mirror doesn't sink every request
+const rotated = () => {
+  const shift = Math.floor(Date.now() / 1000) % MIRRORS.length
+  return [...MIRRORS.slice(shift), ...MIRRORS.slice(0, shift)]
+}
+
 const NAME_RX = /burger|patty|smash|whopper|slider|griddle|char.?grill/i
 
 function heuristicScore(tags = {}) {
@@ -32,7 +38,7 @@ async function queryOverpass(lat, lng, r) {
 );
 out center 120;`
   let lastErr
-  for (const url of MIRRORS) {
+  for (const url of rotated()) {
     try {
       const ctrl = new AbortController()
       const t = setTimeout(() => ctrl.abort(), 12000)
