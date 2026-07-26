@@ -35,6 +35,7 @@ const normalize = (list) =>
     lng: Number(s.lng),
     ratings: (s.ratings || []).map((r) => ({ order: '', note: '', ...r })),
     cosigns: s.cosigns || [],
+    links: s.links || [],
   }))
 
 // ---------- local fallback ----------
@@ -142,6 +143,23 @@ export const store = {
                 ? s.cosigns.filter((n) => n !== by)
                 : [...s.cosigns, by],
             }
+          : s,
+      ),
+    )
+  },
+
+  async addLink(spotId, url, title, by) {
+    if (this.shared) {
+      try {
+        return await api({ action: 'add_link', spotId, url, title, by, deviceId: deviceId() })
+      } catch {
+        this.shared = false
+      }
+    }
+    return localMutate((list) =>
+      list.map((s) =>
+        s.id === spotId
+          ? { ...s, links: [{ url, title, by, at: Date.now() }, ...(s.links || [])] }
           : s,
       ),
     )

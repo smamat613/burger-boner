@@ -37,6 +37,16 @@ export const avgScore = (spot) =>
     ? spot.ratings.reduce((a, r) => a + r.score, 0) / spot.ratings.length
     : null
 
+// Hype: recent activity (scores + attached links in the last 7 days)
+export const hypeScore = (spot) => {
+  const cutoff = Date.now() - 7 * 24 * 3600 * 1000
+  return (
+    spot.ratings.filter((r) => r.at && r.at > cutoff).length +
+    (spot.links || []).filter((l) => l.at && l.at > cutoff).length
+  )
+}
+export const isHot = (spot) => hypeScore(spot) >= 2
+
 // Most-ordered item at a spot
 export const topOrder = (spot) => {
   const tally = {}

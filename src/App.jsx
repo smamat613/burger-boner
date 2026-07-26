@@ -156,6 +156,12 @@ export default function App() {
     setSpots(await store.cosign(spotId, me()))
   }
 
+  const addHypeLink = async (spotId, url, title) => {
+    const next = await store.addLink(spotId, url, title, me())
+    setSpots(next)
+    setSelected(next.find((s) => s.id === spotId))
+  }
+
   const openSpot = (spot, score = false) => {
     setSelected(spot)
     setScoring(score)
@@ -363,6 +369,7 @@ export default function App() {
             onScoreStart={() => setScoring(true)}
             onScoreCancel={() => setScoring(false)}
             onSubmit={addRating}
+            onAddLink={addHypeLink}
             onClose={() => setSelected(null)}
           />
         )}
