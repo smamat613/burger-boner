@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { APP_NAME, APP_TAG, C, F_DISPLAY, F_MONO, F_BODY, avgScore } from './theme.js'
 import { store } from './store.js'
 import { findNearbyBurgers } from './discover.js'
+import { DETROIT } from './seeds.js'
 import { MapView } from './components/MapView.jsx'
 import { Meter } from './components/Gauge.jsx'
 import { Sheet } from './components/Sheet.jsx'
@@ -38,7 +39,9 @@ export default function App() {
       if (!store.shared)
         setBanner('Offline mode — scores stay on this phone until the shared database is set up.')
       setLoading(false)
+      sweep(DETROIT, 12000) // pull suspected burger spots for the opening view right away
     })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const me = () => name.trim() || 'Anonymous'
@@ -49,14 +52,14 @@ export default function App() {
   }
 
   // ---- discovery: pull burger-suspect places into the map as it moves ----
-  const sweep = useCallback(async (center) => {
+  const sweep = useCallback(async (center, radiusM) => {
     const done = searchedRef.current.some(
       (p) => Math.abs(p.lat - center.lat) < 0.02 && Math.abs(p.lng - center.lng) < 0.02,
     )
     if (done) return
     searchedRef.current.push(center)
     try {
-      const found = await findNearbyBurgers(center)
+      const found = await findNearbyBurgers(center, radiusM)
       setDiscovered((prev) => {
         const ids = new Set(prev.map((d) => d.id))
         return [...prev, ...found.filter((d) => !ids.has(d.id))]
@@ -87,9 +90,13 @@ export default function App() {
         setLocating(false)
         sweep(ll)
       },
-      () => {
+      (err) => {
         setLocating(false)
-        setBanner('Location was blocked — you can still browse the map.')
+        setBanner(
+          err && err.code === 1
+            ? 'Location permission is off for this site. iPhone: aA menu → Website Settings → Location → Allow (and check Settings → Privacy → Location Services → Safari). Or just pan the map to where you are — spots load anywhere.'
+            : "Couldn't get a location fix — pan the map to where you are; spots load anywhere.",
+        )
       },
       { enableHighAccuracy: true, timeout: 10000 },
     )
